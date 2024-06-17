@@ -1,14 +1,16 @@
 import epics
 from bluesky.protocols import Status
 from dodal.devices.areadetector import AdAravisDetector
-from ophyd import Component, Device, EpicsMotor, EpicsSignalWithRBV, MotorBundle
-
+from ophyd import Component, Device, EpicsSignalWithRBV
+from ophyd_async.epics.motion import Motor
 from .names import pv_prefix
+from ophyd_async.core import Device
 
-
-class SampleStage(MotorBundle):
-    x: EpicsMotor = Component(EpicsMotor, "X")
-    theta: EpicsMotor = Component(EpicsMotor, "A")
+class SampleStage(Device):
+    def __init__(self, prefix: str, name: str):
+        self.x = Motor(prefix + "X")
+        self.theta = Motor(prefix + "A")
+        super().__init__(name)
 
 
 class Backlight(Device):
@@ -72,6 +74,9 @@ def beam(name: str = "beam") -> Backlight:
     """
 
     return Backlight(name=name, prefix=f"{pv_prefix()}-EA-BEAM-01:")
+
+async def connect_to_device(device: Device):
+    await device.connect()
 
 
 def suppress_epics_warnings() -> None:

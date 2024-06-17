@@ -13,11 +13,11 @@ classifiers = [
 ]
 description = "Bluesky playground environment for Diamond's htss rigs"
 dependencies = [
-    "bluesky[ipython,plotting,cmd]",
+    "bluesky[ipython,plotting,cmd]>=1.13.0a3",
     "ophyd",
     "databroker[client]==2.0.0b17",
     "matplotlib<3.8",
-    "dls-dodal",
+    "dls-dodal>=1.28.0",
     "ipython",
     "pyepics",
     "click",
@@ -28,6 +28,8 @@ dependencies = [
     "pandablocks",
     "scipy",
     "tiled==0.1.0a91",
+    "ophyd_async>=v0.3.2",
+    
 ]
 dynamic = ["version"]
 license.file = "LICENSE"

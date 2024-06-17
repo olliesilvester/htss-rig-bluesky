@@ -3,12 +3,12 @@
 #
 
 
-from typing import Generator
+from typing import Any, Generator
 
 import bluesky.plan_stubs as bps
 import bluesky.plans as bp
 from ophyd import PositionerBase
-
+from ophyd_async.epics.motion import Motor
 from htss.devices import AdAravisDetector, SampleStage
 
 from .detector import ensure_detector_ready
@@ -82,7 +82,7 @@ def exercise_scan(det: AdAravisDetector, sample: SampleStage) -> Generator:
 
 
 def exercise_motor(
-    motor: PositionerBase,
+    motor: Motor,
     low_limit: float,
     high_limit: float,
     tolerance: float = 0.0,
@@ -108,16 +108,17 @@ def exercise_motor(
     print(f"Excercising {name}")
 
     if check_limits:
-        assert_limits_within(motor, low_limit, high_limit)
-    yield from bps.mv(motor, low_limit, wait=True)
+        yield from assert_limits_within(motor, low_limit, high_limit)
+    print(f"asdasdasdasd {name}")
+    yield from bps.mv(motor, low_limit, timeout=15)
     yield from assert_motor_at(motor, low_limit, tolerance)
-    yield from bps.mv(motor, high_limit, wait=True)
+    yield from bps.mv(motor, high_limit, timeout=15)
     yield from assert_motor_at(motor, high_limit, tolerance)
 
 
 def assert_limits_within(
-    motor: PositionerBase, low_limit: float, high_limit: float
-) -> None:
+    motor: Motor, low_limit: float, high_limit: float
+) -> Generator[Any, Any, Any]:
     """
     Check a motors limits fall within the bounds supplied.
     Note this is not an exact check, just whether the real limits exceed
@@ -129,13 +130,17 @@ def assert_limits_within(
         high_limit: The upper bound
     """
 
+    print("checking limits")
+    motor_low_lim = yield from bps.rd(motor.low_limit_travel)
+    motor_high_lim = yield from bps.rd(motor.high_limit_travel)
+    print(f"checked {motor_low_lim}")
     name = motor.name
     assert (
-        motor.high_limit >= high_limit
-    ), f"{name}'s upper limit is {motor.high_limit}, should be >= {high_limit}"
+        motor_low_lim >= high_limit
+    ), f"{name}'s upper limit is {motor_low_lim}, should be >= {high_limit}"
     assert (
-        motor.low_limit <= low_limit
-    ), f"{name}'s lower limit is {motor.low_limit}, should be <= {low_limit}"
+        motor_high_lim <= low_limit
+    ), f"{name}'s lower limit is {motor_high_lim}, should be <= {low_limit}"
 
 
 def assert_motor_at(

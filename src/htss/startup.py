@@ -9,7 +9,7 @@ import numpy as np  # noqa: F401
 from bluesky import RunEngine
 from bluesky.callbacks.best_effort import BestEffortCallback
 from dodal.utils import make_all_devices
-
+from ophyd_async.core import Device
 import htss.devices as devices
 from htss.plans.calibration import scan_center, scan_exposure  # noqa: F401
 from htss.plans.detector import Roi, ensure_detector_ready, set_roi  # noqa: F401
@@ -26,9 +26,10 @@ from htss.plotting.cropping import croppable_plot  # noqa: F401
 from htss.plotting.images import plot_images_vs_axis  # noqa: F401
 from htss.processing.centering import find_center_of_mass, find_sum  # noqa: F401
 from htss.processing.tomography import normalize_tomography_data  # noqa: F401
-
+import asyncio
 from .data_access import get_client, print_docs  # noqa: F401
 from .names import BEAMLINE
+from typing import List
 
 # Required to suppress harmless warnings resulting from
 # the networking setup
@@ -36,7 +37,13 @@ devices.suppress_epics_warnings()
 
 matplotlib.use("QtAgg")
 
-globals().update(make_all_devices(devices))
+all_devices = make_all_devices(devices)[0]
+
+globals().update(all_devices)
+
+for device in all_devices.values():
+    if isinstance(device, Device):
+        asyncio.run(device.connect())
 
 bec = BestEffortCallback()
 
