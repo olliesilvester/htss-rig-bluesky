@@ -5,6 +5,33 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "env": {
+                // The default config in pyproject.toml's "[tool.pytest.ini_options]" adds coverage.
+                // Cannot have coverage and debugging at the same time.
+                // https://github.com/microsoft/vscode-python/issues/693
+                "BEAMLINE": "p49"
+            }
+        },
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                // The default config in pyproject.toml's "[tool.pytest.ini_options]" adds coverage.
+                // Cannot have coverage and debugging at the same time.
+                // https://github.com/microsoft/vscode-python/issues/693
+                "BEAMLINE": "p49"
+            }
+        },
+        {
             "name": "Debug Unit Test",
             "type": "python",
             "request": "launch",
@@ -18,7 +45,8 @@
                 // The default config in pyproject.toml's "[tool.pytest.ini_options]" adds coverage.
                 // Cannot have coverage and debugging at the same time.
                 // https://github.com/microsoft/vscode-python/issues/693
-                "PYTEST_ADDOPTS": "--no-cov"
+                "PYTEST_ADDOPTS": "--no-cov",
+                "BEAMLINE": "p49"
             },
         }
     ]

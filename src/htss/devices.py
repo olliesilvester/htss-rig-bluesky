@@ -5,6 +5,17 @@ from ophyd import Component, Device, EpicsSignalWithRBV
 from ophyd_async.epics.motion import Motor
 from .names import pv_prefix
 from ophyd_async.core import Device
+from ophyd_async.epics.areadetector.aravis import AravisDetector
+from ophyd_async.core import StaticDirectoryProvider
+from enum import Enum
+from ophyd_async.core import StandardReadable, AsyncStatus
+from ophyd_async.epics.signal import epics_signal_rw
+
+
+
+class BacklightPower(str, Enum):
+    ON = "On"
+    OFF = "Off"
 
 class SampleStage(Device):
     def __init__(self, prefix: str, name: str):
@@ -12,18 +23,17 @@ class SampleStage(Device):
         self.theta = Motor(prefix + "A")
         super().__init__(name)
 
+class Backlight(StandardReadable):
+    """Simple device to trigger the pneumatic in/out."""
 
-class Backlight(Device):
-    on: EpicsSignalWithRBV = Component(EpicsSignalWithRBV, "State")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.on.put_complete = True
-
-    def set(self, value) -> Status:
-        # Shortcut so that bps.abs_set(beam.on, True) is the same
-        # as bps.abs_set(beam, True)
-        return self.on.set(value)
+    def __init__(self, prefix: str, name: str = "") -> None:
+        self.power = epics_signal_rw(BacklightPower, prefix + "State")
+        super().__init__(name)
+    @AsyncStatus.wrap
+    async def set(self, position: BacklightPower):
+        """This setter will turn the backlight on when we move it in to the beam and off
+        when we move it out."""
+        await self.power.set(position)
 
 
 def sample(name: str = "sample_stage") -> SampleStage:
@@ -41,9 +51,9 @@ def sample(name: str = "sample_stage") -> SampleStage:
     return SampleStage(name=name, prefix=f"{pv_prefix()}-MO-MAP-01:STAGE:")
 
 
-def det(name: str = "det") -> AdAravisDetector:
+def det(name: str = "det") -> AravisDetector:
     """
-    Create detector stage Ophyd device
+    Create detector stage Ophyd-Async device
 
     Args:
         name: Name for this device for reference in events.
@@ -52,12 +62,13 @@ def det(name: str = "det") -> AdAravisDetector:
     Returns:
         SampleStage: A new Ophyd Device
     """
+    dir_prov = StaticDirectoryProvider("/scratch/qqh35939/detector_test")
 
-    det = AdAravisDetector(name=name, prefix=f"{pv_prefix()}-EA-DET-01:")
-    det.read_attrs += ["cam"]
-    det.cam.read_attrs += ["acquire_time", "acquire_period"]
-    det.hdf.reg_root = "/exports/mybeamline/data"
-    det.hdf.write_path_template = "%Y"
+    det = AravisDetector(name=name, prefix=f"{pv_prefix()}-EA-DET-01:", directory_provider=dir_prov, hdf_suffix="HDF5:", drv_suffix="DET:")
+    #det.read_attrs += ["cam"]
+    #det.cam.read_attrs += ["acquire_time", "acquire_period"]
+    # det.hdf.reg_root = "/exports/mybeamline/data"
+    # det.hdf.write_path_template = "%Y"
     return det
 
 

@@ -30,7 +30,8 @@ import asyncio
 from .data_access import get_client, print_docs  # noqa: F401
 from .names import BEAMLINE
 from typing import List
-
+import os
+from htss.devices import sample
 # Required to suppress harmless warnings resulting from
 # the networking setup
 devices.suppress_epics_warnings()
@@ -41,9 +42,9 @@ all_devices = make_all_devices(devices)[0]
 
 globals().update(all_devices)
 
-for device in all_devices.values():
-    if isinstance(device, Device):
-        asyncio.run(device.connect())
+sample = sample()
+
+asyncio.run(sample.connect())
 
 bec = BestEffortCallback()
 

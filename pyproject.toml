@@ -19,7 +19,6 @@ dependencies = [
     "matplotlib<3.8",
     "dls-dodal>=1.28.0",
     "ipython",
-    "pyepics",
     "click",
     "PyQt6",
     "PyQt5",
