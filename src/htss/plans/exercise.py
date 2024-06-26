@@ -10,11 +10,11 @@ import bluesky.plans as bp
 from ophyd import PositionerBase
 from ophyd_async.epics.motion import Motor
 from htss.devices import AdAravisDetector, SampleStage
-
+from ophyd_async.epics.areadetector.aravis import AravisDetector
 from .detector import ensure_detector_ready
 
 
-def exercise_beamline(det: AdAravisDetector, sample: SampleStage) -> Generator:
+def exercise_beamline(det: AravisDetector, sample: SampleStage) -> Generator:
     """
     Perform all beamline exercise plans sequentially.
 
@@ -48,7 +48,7 @@ def exercise_motors(sample: SampleStage) -> Generator:
     )
 
 
-def exercise_detector(det: AdAravisDetector) -> Generator:
+def exercise_detector(det: AravisDetector) -> Generator:
     """
     exercise the detector by taking a frame.
 
@@ -59,7 +59,7 @@ def exercise_detector(det: AdAravisDetector) -> Generator:
         Plan
     """
 
-    print(f"Excercising {det}")
+    print(f"Exercising {det}")
     yield from ensure_detector_ready(det)
     yield from bp.count([det])
 
