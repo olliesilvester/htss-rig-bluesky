@@ -15,7 +15,7 @@ description = "Bluesky playground environment for Diamond's htss rigs"
 dependencies = [
     "bluesky[ipython,plotting,cmd]>=1.13.0a3",
     "ophyd",
-    "databroker[client]==2.0.0b17",
+    "databroker[client]",
     "matplotlib<3.8",
     "dls-dodal>=1.28.0",
     "ipython",

@@ -1,13 +1,12 @@
 from pprint import pprint
 from typing import Any, Mapping
 
-from databroker.client import CatalogOfBlueskyRuns
 from tiled.client import from_uri
 
 from .names import server_name
 
 
-def get_client() -> CatalogOfBlueskyRuns:
+def get_client():
     return from_uri(f"http://{server_name()}:8000")
 
 

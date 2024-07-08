@@ -13,7 +13,6 @@ from ophyd_async.core import StandardReadable, AsyncStatus
 from ophyd_async.epics.signal import epics_signal_rw
 
 
-
 class BacklightPower(str, Enum):
     ON = "On"
     OFF = "Off"
