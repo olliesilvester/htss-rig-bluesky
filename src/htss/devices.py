@@ -67,13 +67,10 @@ def det(name: str = "det") -> AravisDetector:
     
 
     det = AravisDetector(name=name, prefix=f"{pv_prefix()}-EA-DET-01:", directory_provider=dir_prov, hdf_suffix="HDF5:", drv_suffix="DET:")
-    det.set_external_trigger_gpio(1) #Constant width external gate signals? Need to check this
     #det.read_attrs += ["cam"]
     #det.cam.read_attrs += ["acquire_time", "acquire_period"]
-    # det.hdf.reg_root = "/exports/mybeamline/data"
     #det.hdf.write_path_template = "%Y"
     return det
-
 
 def beam(name: str = "beam") -> Backlight:
     """
