@@ -45,3 +45,12 @@ We have a Backlight with a 'power' which we can turn on and off
 
 We also have the detector which we can take images with. We can treat this in a similar way to the detector simulator from yesterday
 """
+
+async def light_on():
+    be.power.ON
+    await asyncio.sleep(5)
+    be.power.OFF
+
+
+def trigger_detector():
+    
