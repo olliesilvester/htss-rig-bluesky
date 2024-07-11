@@ -11,6 +11,8 @@ from ophyd_async.core import StaticDirectoryProvider
 from enum import Enum
 from ophyd_async.core import StandardReadable, AsyncStatus
 from ophyd_async.epics.signal import epics_signal_rw
+import time
+import asyncio
 
 class PositionOutOfRange(Exception):
     pass
@@ -19,33 +21,58 @@ class BacklightPower(str, Enum):
     ON = "On"
     OFF = "Off"
 
+
+def _calculate_expected_time(pos_x, current_x, velocity_x, pos_theta, current_theta, velocity_theta, high_limit, low_limit) -> float:
+    time_x = abs((pos_x - current_x)/velocity_x)
+    time_theta = abs((pos_theta - current_theta)/velocity_theta)
+
+    if pos_x < low_limit or pos_x > high_limit:
+        raise PositionOutOfRange("Position entered out of range.")
+    
+    if time_x > time_theta:
+        estimated_time = time_x
+    else:
+        estimated_time = time_theta
+
+    return estimated_time
+
 class SampleStage(Device):
     def __init__(self, prefix: str, name: str):
         self.x = Motor(prefix + "X")
         self.theta = Motor(prefix + "A")
+        self.previous_positions = [[],[]]
         super().__init__(name)
     
     @AsyncStatus.wrap
-    async def set(self, pos_x, pos_theta):
-        high_limit = await self.x.get_high_limit_travel()
-        low_limit = await self.x.get_low_limit_travel()
-        try: 
-            if pos_x < low_limit or pos_x > high_limit:
-                raise PositionOutOfRange
-        except PositionOutOfRange:
-                print("Position entered out of range.")
-        current_pos_x = await self.x.get_user_readback()
-        current_pos_theta = await self.theta.get_user_readback()
-        velocity = await self.get_velocity()
-        time = 
-        
+    async def set(self, pos_x: float, pos_theta: float):
+        self.previous_positions[0].append(pos_x)
+        self.previous_positions[1].append(pos_theta)
+
+        high_limit_awaitable = self.x.high_limit_travel.get_value()
+        low_limit_awaitable = self.x.high_limit_travel.get_value()
+        current_x_awaitable = self.x.user_readback.get_value()
+        current_theta_awaitable = self.theta.user_readback.get_value()
+        velocity_x_awaitable  = self.x.velocity.get_value()
+        velocity_theta_awaitable = self.theta.velocity.get_value()
+
+        high_limit, low_limit, current_x, current_theta, velocity_x, velocity_theta = await asyncio.gather(high_limit_awaitable, low_limit_awaitable, current_x_awaitable, current_theta_awaitable, velocity_x_awaitable, velocity_theta_awaitable)
+
+        estimated_time =_calculate_expected_time(pos_x, current_x, velocity_x, pos_theta, current_theta, velocity_theta, high_limit, low_limit) + 5
+
+        move_x = self.x.set(pos_x, estimated_time)
+        move_theta = self.theta.set(pos_theta, estimated_time)
+        await asyncio.gather(move_x, move_theta)
     
     @AsyncStatus.wrap
     async def read(self):
-        current_pos_x = await self.x.get_
-        current_pos_theta = await self.theta.get_
-        current_positions = {}
-        
+        current_pos_x = await self.x.user_readback.get_value()
+        current_pos_theta = await self.theta.user_readback.get_value()
+        current_positions = {"X": None, "A": None}
+        current_positions["X"] = current_pos_x
+        current_positions["A"] = current_pos_theta
+        return current_positions
+
+
 
 
 class Backlight(StandardReadable):
