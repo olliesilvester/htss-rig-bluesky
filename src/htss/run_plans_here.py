@@ -48,10 +48,10 @@ We also have the detector which we can take images with. We can treat this in a 
 """
 
 #introduction
-async def light_on_and_off():
-    yield bps.abs_set(be.power, BacklightPower.ON, wait=True)
-    await asyncio.sleep(5)
-    yield bps.abs_set(be.power, BacklightPower.OFF)
+def light_on_and_off():
+    yield from bps.abs_set(be.power, BacklightPower.ON, wait=True)
+    sleep(5)
+    yield from bps.abs_set(be.power, BacklightPower.OFF)
 
 
 def trigger_detector():
@@ -68,29 +68,23 @@ def move_omega(position):
 #thursday part 1
 
 def light_on():
-    yield bps.abs_set(be.power, BacklightPower.ON)
+    yield from bps.abs_set(be.power, BacklightPower.ON, wait=True)
 
 def light_off():
-    yield bps.abs_set(be.power, BacklightPower.OFF)
+    yield from bps.abs_set(be.power, BacklightPower.OFF, wait=True)
 
 def move_omega_to_zero():
     yield from bps.mv(sam.theta, 0)
 
 def scan_five_images():
-    yield from scan(dets, detector.theta, 0, 100, 5)
+    yield from scan(dets, sam.theta, 0, 200, 5)
+
+def combined():
+    yield from light_on()
+    yield from move_omega_to_zero()
+    yield from scan_five_images()
+    yield from light_off()
+    
 
 #thursday part 2
-class PositionOutOfRange(Exception):
-    pass
-
-def set(pos_x, pos_theta):
-    try: 
-        if pos_x < 0 or pos_x > 1:
-            raise PositionOutOfRange
-        elif pos_theta < 0 or pos_theta > 360:
-            raise PositionOutOfRange
-    except:
-            
-
-
 

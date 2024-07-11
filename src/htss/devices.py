@@ -12,6 +12,8 @@ from enum import Enum
 from ophyd_async.core import StandardReadable, AsyncStatus
 from ophyd_async.epics.signal import epics_signal_rw
 
+class PositionOutOfRange(Exception):
+    pass
 
 class BacklightPower(str, Enum):
     ON = "On"
@@ -22,6 +24,29 @@ class SampleStage(Device):
         self.x = Motor(prefix + "X")
         self.theta = Motor(prefix + "A")
         super().__init__(name)
+    
+    @AsyncStatus.wrap
+    async def set(self, pos_x, pos_theta):
+        high_limit = await self.x.get_high_limit_travel()
+        low_limit = await self.x.get_low_limit_travel()
+        try: 
+            if pos_x < low_limit or pos_x > high_limit:
+                raise PositionOutOfRange
+        except PositionOutOfRange:
+                print("Position entered out of range.")
+        current_pos_x = await self.x.get_user_readback()
+        current_pos_theta = await self.theta.get_user_readback()
+        velocity = await self.get_velocity()
+        time = 
+        
+    
+    @AsyncStatus.wrap
+    async def read(self):
+        current_pos_x = await self.x.get_
+        current_pos_theta = await self.theta.get_
+        current_positions = {}
+        
+
 
 class Backlight(StandardReadable):
     """Simple device to trigger the pneumatic in/out."""
