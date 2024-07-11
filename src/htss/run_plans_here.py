@@ -31,12 +31,17 @@ RE = RunEngine()
 with DeviceCollector():
     sam = sample()
     detector = det()
-    be = beam()
+    #be = beam()
 
 print("All devices connected")
 bec = BestEffortCallback()
 RE.subscribe(bec)
 RE.waiting_hook = ProgressBarManager()
+
+def my_test_plan():
+    yield from bps.abs_set(sam, 15, 360)
+
+RE(my_test_plan())
 
 """Look at the devices we have access to in devices.py . In vscode, press ctrl+p and click devices to quickly find the file
 

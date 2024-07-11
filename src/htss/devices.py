@@ -42,19 +42,23 @@ class SampleStage(Device):
 
     @AsyncStatus.wrap
     async def set(self, x_pos: float, theta: float):
+        print("entered set")
         low_limit =  self.x.low_limit_travel.get_value()
         high_limit = self.x.high_limit_travel.get_value()
         current = self.x.user_readback.get_value()
         velocity = self.x.max_velocity.get_value()
-        low_limit, high_limit, current, velocity = await asyncio.gather([low_limit, high_limit, current, velocity])
+        low_limit, high_limit, current, velocity = await asyncio.gather(low_limit, high_limit, current, velocity)
+        print("doing first gather")
         expected_time = _calculate_estimated_time()
-        await asyncio.gather([self.x.set(x_pos, timeout=expected_time + 5), self.theta.set(theta, timeout = expected_time + 5)])
+        print("doing second gather")
+        await asyncio.gather(self.x.set(x_pos, timeout=expected_time + 5), self.theta.set(theta, timeout = expected_time + 5))
+        print("move complete")
     
     async def read(self):
         current_position = {"x": None, "theta": None}
         current_position['x'] = self.x.user_readback.get_value()
         current_position['theta'] = self.theta.user_readback.get_value()
-        current_position['x'], current_position['theta'] = await asyncio.gather(current_position['x'], self.theta.user_readback.get_value())
+        current_position['x'], current_position['theta'] = await asyncio.gather(current_position['x'], current_position['theta'])
         return current_position
 
 
@@ -130,3 +134,4 @@ def suppress_epics_warnings() -> None:
         ...
 
     epics.ca.replace_printf_handler(handle_messages)
+
