@@ -11,27 +11,53 @@ from ophyd_async.core import StaticDirectoryProvider
 from enum import Enum
 from ophyd_async.core import StandardReadable, AsyncStatus
 from ophyd_async.epics.signal import epics_signal_rw
+import bluesky.plan_stubs as bps
+import time
+import asyncio
 
+
+def _calculate_estimated_time(x_pos, low_limit, high_limit, current, previous_positions: list, velocity) -> float:
+    if x_pos < low_limit or x_pos > high_limit:
+        raise ParameterOutsideLimits()
+    else:
+        previous_positions.append(current)
+        desired_x_position = x_pos
+        distance = desired_x_position - current
+        return abs(distance/velocity)
 
 class BacklightPower(str, Enum):
     ON = "On"
     OFF = "Off"
 
+class ParameterOutsideLimits(Exception):
+    pass
 
 class SampleStage(Device):
     def __init__(self, prefix: str, name: str):
         self.x = Motor(prefix + "X")
         self.theta = Motor(prefix + "A")
+        self.previous_positions = []
+        dict = {}
         super().__init__(name)
 
     @AsyncStatus.wrap
-    async def set(self, x_pos: float, y_pos: float):
-        """This setter will turn the backlight on when we move it in to the beam and off
-        when we move it out."""
-        
-        #await getting the limits
+    async def set(self, x_pos: float, theta: float):
+        low_limit =  self.x.low_limit_travel.get_value()
+        high_limit = self.x.high_limit_travel.get_value()
+        current = self.x.user_readback.get_value()
+        velocity = self.x.max_velocity.get_value()
+        low_limit, high_limit, current, velocity = await asyncio.gather([low_limit, high_limit, current, velocity])
+        expected_time = _calculate_estimated_time()
+        await asyncio.gather([self.x.set(x_pos, timeout=expected_time + 5), self.theta.set(theta, timeout = expected_time + 5)])
+    
+    async def read(self):
+        current_position = {"x": None, "theta": None}
+        current_position['x'] = self.x.user_readback.get_value()
+        current_position['theta'] = self.theta.user_readback.get_value()
+        current_position['x'], current_position['theta'] = await asyncio.gather(current_position['x'], self.theta.user_readback.get_value())
+        return current_position
 
-        #check limits
+
 
 class Backlight(StandardReadable):
     """Simple device to trigger the pneumatic in/out."""
