@@ -17,11 +17,21 @@ class BacklightPower(str, Enum):
     ON = "On"
     OFF = "Off"
 
+
 class SampleStage(Device):
     def __init__(self, prefix: str, name: str):
         self.x = Motor(prefix + "X")
         self.theta = Motor(prefix + "A")
         super().__init__(name)
+
+    @AsyncStatus.wrap
+    async def set(self, x_pos: float, y_pos: float):
+        """This setter will turn the backlight on when we move it in to the beam and off
+        when we move it out."""
+        
+        #await getting the limits
+
+        #check limits
 
 class Backlight(StandardReadable):
     """Simple device to trigger the pneumatic in/out."""

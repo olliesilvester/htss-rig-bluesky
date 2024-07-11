@@ -1,5 +1,7 @@
 import asyncio
 import os
+import subprocess
+from enum import Enum
 from time import sleep
 
 import bluesky.plan_stubs as bps
@@ -7,26 +9,25 @@ import epicscorelibs.path.pyepics
 import matplotlib.pyplot as plt
 from bluesky import RunEngine
 from bluesky.callbacks.best_effort import BestEffortCallback
+from bluesky.plans import count, scan
 from bluesky.preprocessors import contingency_wrapper
+from bluesky.utils import ProgressBarManager
+from databroker import Broker
 from dodal.utils import make_all_devices
 from ophyd_async.core import Device, DeviceCollector
 from ophyd_async.epics.motion import Motor
+
 import htss.devices as devices
 from htss.__main__ import main
-from htss.devices import beam, det, sample
+from htss.devices import BacklightPower, SampleStage, beam, det, sample
 from htss.plans.exercise import exercise_scan
-from htss.devices import BacklightPower, SampleStage
-from databroker import Broker
-from bluesky.utils import ProgressBarManager
-from bluesky.plans import count, scan
-import subprocess
-from enum import Enum
+
 devices.suppress_epics_warnings()
 
-#Start instance of the RunEngine
+# Start instance of the RunEngine
 RE = RunEngine()
 
-#Create and connect to the devices
+# Create and connect to the devices
 with DeviceCollector():
     sam = sample()
     detector = det()
